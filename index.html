@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оптик ба Микроскоп Тооцоолол</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        label, input, button {
+            margin: 10px 0;
+            display: block;
+        }
+        input {
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border: 1px solid #ccc;
+        }
+        .visual-demo {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .visual-container {
+            text-align: center;
+            position: relative;
+        }
+        /* 3D effect for magnification visualization */
+        .object, .image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #007BFF;
+            margin-top: 10px;
+            transition: all 0.5s ease-in-out;
+        }
+        .image {
+            background-color: #28a745;
+        }
+        /* Ruler for micrometer scale */
+        .micrometer-ruler {
+            width: 80%;
+            height: 40px;
+            position: relative;
+            background-color: #ddd;
+            border-radius: 8px;
+        }
+        .micrometer-scale {
+            position: absolute;
+            height: 100%;
+            background-color: #17a2b8;
+            border-radius: 8px;
+            transition: width 0.5s ease;
+        }
+        /* Visual focus circle to demonstrate magnification */
+        .focus-ring {
+            position: absolute;
+            border: 3px solid rgba(0, 123, 255, 0.5);
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Оптик ба Микроскоп Тооцоолол Програм</h1>
+
+        <!-- Оптик тооцоолол -->
+        <div>
+            <h2>Оптик Ихсэлтийн Тооцоолол</h2>
+            <label for="f_ob">Обьектын линзний фокаль урт (f_ob мм):</label>
+            <input type="number" id="f_ob" placeholder="f_ob оруулна уу">
+
+            <label for="f_ok">Нүдний шилний фокаль урт (f_ok мм):</label>
+            <input type="number" id="f_ok" placeholder="f_ok оруулна уу">
+
+            <button onclick="calculateMagnification()">Ихсэлтийг Тооцоолох</button>
+        </div>
+
+        <!-- Микрометр хэмжилт -->
+        <div>
+            <h2>Микрометр Хэмжилт Тооцоолол</h2>
+            <label for="delta">Дельта (Δ):</label>
+            <input type="number" id="delta" placeholder="Δ оруулна уу">
+
+            <label for="f_ob_micrometer">Обьектын линзний фокаль урт (f_ob мм):</label>
+            <input type="number" id="f_ob_micrometer" placeholder="f_ob оруулна уу">
+
+            <label for="f_ok_micrometer">Нүдний шилний фокаль урт (f_ok мм):</label>
+            <input type="number" id="f_ok_micrometer" placeholder="f_ok оруулна уу">
+
+            <button onclick="calculateYM()">YM Тооцоолох</button>
+        </div>
+
+        <!-- Үр дүнгийн хэсэг -->
+        <div id="result" class="result"></div>
+        <button onclick="resetFields()">reset</button>
+
+        <!-- Визуал Дэможиац -->
+        <div class="visual-demo">
+            <div class="visual-container">
+                <h3>Оптик Ихсэлт</h3>
+                <div class="focus-ring" id="focus-ring"></div>
+                <div class="object" id="object"></div>
+                <div class="image" id="image"></div>
+            </div>
+            <div class="visual-container">
+                <h3>Микрометр Хэмжилт (YM)</h3>
+                <div class="micrometer-ruler">
+                    <div id="micrometer-scale" class="micrometer-scale"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ихсэлтийг тооцоолох функц
+        function calculateMagnification() {
+            var f_ob = parseFloat(document.getElementById("f_ob").value);
+            var f_ok = parseFloat(document.getElementById("f_ok").value);
+            
+            // Үнэн зөв утгуудыг шалгах
+            if (isNaN(f_ob) || isNaN(f_ok) || f_ob <= 0 || f_ok <= 0) {
+                displayResult("f_ob болон f_ok оруулсан утгууд зөв биш байна.", true);
+                return;
+            }
+
+            var magnification = f_ob / f_ok;
+            displayResult("Ихсэлт: " + magnification.toFixed(2), false);
+            updateOpticalVisualization(magnification);
+        }
+
+        // YM (Микрометр хэмжилт) тооцоолох функц
+        function calculateYM() {
+            var delta = parseFloat(document.getElementById("delta").value);
+            var f_ob = parseFloat(document.getElementById("f_ob_micrometer").value);
+            var f_ok = parseFloat(document.getElementById("f_ok_micrometer").value);
+
+            // Үнэн зөв утгуудыг шалгах
+            if (isNaN(delta) || isNaN(f_ob) || isNaN(f_ok) || delta <= 0 || f_ob <= 0 || f_ok <= 0) {
+                displayResult("delta, f_ob болон f_ok утгууд зөв биш байна.", true);
+                return;
+            }
+
+            var YM = (25 * delta) / (f_ob * f_ok);
+            displayResult("YM: " + YM.toFixed(4), false);
+            updateMicrometerVisualization(YM);
+        }
+
+        // Үр дүнг үзүүлэх функц
+        function displayResult(result, isError) {
+            var resultArea = document.getElementById("result");
+            resultArea.innerHTML = result;
+            resultArea.classList.remove("error", "success");
+            resultArea.classList.add(isError ? "error" : "success");
+        }
+
+        // Оптик визуализацийг шинэчлэх функц
+        function updateOpticalVisualization(magnification) {
+            var object = document.getElementById("object");
+            var image = document.getElementById("image");
+            var focusRing = document.getElementById("focus-ring");
+
+            // Ихсэлтэд үндэслэн зурагны хэмжээг шинэчлэх
+            var newSize = 80 * magnification;
+            image.style.width = newSize + "px";
+            image.style.height = newSize + "px";
+            focusRing.style.width = (newSize + 40) + "px";
+            focusRing.style.height = (newSize + 40) + "px";
+        }
+
+        // Микрометр визуализацийг шинэчлэх функц
+        function updateMicrometerVisualization(YM) {
+            var scale = document.getElementById("micrometer-scale");
+
+            // YM утгад үндэслэн хэмжээсийн өргөнг шинэчлэх
+            var newWidth = Math.min(100 * YM, 100);  // Визуал хэмжээсийн өргөнийг 100% хязгаарлах
+            scale.style.width = newWidth + "%";
+        }
+
+        // Формын талбаруудыг болон үр дүнг шинэчлэх функц
+        function resetFields() {
+            document.getElementById("f_ob").value = '';
+            document.getElementById("f_ok").value = '';
+            document.getElementById("delta").value = '';
+            document.getElementById("f_ob_micrometer").value = '';
+            document.getElementById("f_ok_micrometer").value = '';
+            document.getElementById("result").innerHTML = '';
+            document.getElementById("object").style.width = "80px";
+            document.getElementById("object").style.height = "80px";
+            document.getElementById("image").style.width = "80px";
+            document.getElementById("image").style.height = "80px";
+            document.getElementById("micrometer-scale").style.width = "0%";
+        }
+    </script>
+</body>
+</html>
